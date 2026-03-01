@@ -114,6 +114,7 @@ local function radioSupportedResolutions(board)
         ["X20"]={{800,480}, {784, 316}},
     }
     local radioId = getRadioId(board)
+    if debug_mode then print(string.format("Board: %s, RadioId: %s", board, radioId)) end
     if not supported[radioId] then return {} end
     return supported[radioId]
 end
@@ -127,9 +128,11 @@ local function isResolutionSupported(board, w, h)
     local resolutions = radioSupportedResolutions(board)
     for _, def in pairs(resolutions) do
         if w == def[1] and h == def[2] then
+            if debug_mode then print(string.format("Board: %s, resolution %sx%s is supported", board, w, h)) end
             return true
         end
     end
+    if debug_mode then print(string.format("Board: %s, resolution %sx%s not supported", board, w, h)) end
     return false
 end
 
@@ -203,16 +206,18 @@ end
 --
 local function wakeup(widget)
     local w, h = lcd.getWindowSize()
-    -- load once the radio definition
-    if widget.radio == nil then
-        widget.radio = loadRadioDefinition(sys.board, w, h) -- false|table
-        lcd.invalidate()
-    end
     -- detects if layout has changed
     if w ~= widget.windowWidth or h ~= widget.windowHeight then
         widget.windowWidth = w
         widget.windowHeight = h
-        widget.radio = nil -- will attempt to load again next wakeup
+        widget.radio = nil
+    end
+    -- load once the radio definition
+    if widget.radio == nil then
+        widget.radio = false
+        if debug_mode then print('wakeup : load radio definition') end
+        widget.radio = loadRadioDefinition(sys.board, w, h) -- false|table
+        lcd.invalidate()
     end
 end
 
@@ -382,9 +387,11 @@ local function configure(widget)
     local radioDefinition
     if widget.radio == nil then
         -- handles the case when we call configure from the screens page without having display the widget
+        if debug_mode then print("Configure : no radio definition found, loading a default") end
         local resolutions = radioSupportedResolutions(sys.board)
         if #resolutions < 1 then
             -- unsupported radio (unimplemented as we always return a default radio)
+            if debug_mode then warn("Configure : unsupported radio is not implemented") end
         else
             -- get the first radio definition to use something for the switches
             radioDefinition = loadRadioDefinition(sys.board, table.unpack(resolutions[1]))
