@@ -228,6 +228,8 @@ end
 -- **************************************************************************************
 --
 local function paint(widget)
+    if not lcd.isVisible() then return end
+    local timestamp = os.clock()
     local w, h = lcd.getWindowSize()
 
     -- show the focus through a border of 4px except on full screen
@@ -289,14 +291,15 @@ local function paint(widget)
             end
         end
     end
-
     for id, specs in pairs(widget.radio) do
-        lcd.color(type(widget.TextColor) == "function" and widget.TextColor() or widget.TextColor)
-        if specs["lines"] then addLegend(widget[id] or "", id, specs["lines"], specs["align"], specs["offset"]) end
         lcd.color(type(widget.ControlsColor) == "function" and widget.ControlsColor() or widget.ControlsColor)
         if type(specs["draw"]) == "function" then specs["draw"]() end
     end
-
+    for id, specs in pairs(widget.radio) do
+        lcd.color(type(widget.TextColor) == "function" and widget.TextColor() or widget.TextColor)
+        if specs["lines"] then addLegend(widget[id] or "", id, specs["lines"], specs["align"], specs["offset"]) end
+    end
+    print(string.format("paint cpu time : %sms", (os.clock() -timestamp) * 1000))
 end
 
 -- **************************************************************************************
@@ -530,6 +533,13 @@ local function write(widget)
     f = nil -- TODO is it useful ?
 end
 
+local function build(widget)
+    print("Build Called")
+    local w, h = lcd.getWindowSize()
+    form.clear()
+    form.addStick(nil, {x=168, y=167}, 1, 2)
+    form.addTrim(nil, {x=451, y=299}, 1)
+end
 -- **************************************************************************************
 -- ***		     init widget		 	   		                                      ***
 -- This handler is called during the transmitter's boot process.                      ***
@@ -538,7 +548,7 @@ end
 -- **************************************************************************************
 --
 local function init()
-    system.registerWidget({key="swmap", name=name, create=create, wakeup=wakeup, paint=paint, configure=configure, read=read, write=write, event=event, title=false})
+    system.registerWidget({key="swmap", name=name, create=create, wakeup=wakeup, build=build, paint=paint, configure=configure, read=read, write=write, event=event, title=false})
 end
 
 

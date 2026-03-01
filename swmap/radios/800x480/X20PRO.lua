@@ -129,6 +129,6 @@ return {
         ["draw"]=function() lcd.drawCircle(242,241, 74) lcd.drawCircle(242,241, 10) end
     },
     ["RH STICK"]={
-        ["draw"]=function() lcd.drawCircle(559,241, 74) lcd.drawCircle(559,241, 10) end
+        ["draw"]=function() lcd.color(lcd.RGB(82,81,82)) lcd.drawFilledCircle(559,241, 74) lcd.color(lcd.RGB(49,49,49)) lcd.drawFilledRectangle(499, 204, 120, 74) lcd.color(lcd.RGB(242,180,84)) lcd.drawFilledCircle(559,241, 6) end
     },
 }
