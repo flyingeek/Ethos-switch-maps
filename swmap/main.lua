@@ -103,24 +103,10 @@ local function getRadioId(board)
     else return 'X20' end
 end
 
---- returns the radio definition file for a board and a window resolution
----@param board string the board returned by sys.board
----@param w integer the width of the window
----@param h integer the height of the window
----@return table<string, { lines: table|nil, draw: function|nil }>
-local function loadRadioDefinition(board, w, h)
-    local function load(basename)
-        return assert(loadfile(string.format("radios/%dx%d/%s.lua", w, h, basename)))()
-    end
-    return load(getRadioId(board))
-end
-
----checks if resolution is supported for the given board or gives the first supported resolution
+---gives the resolutions supported by a radio
 ---@param board string a board returned by sys.board
----@param w integer|nil the window with
----@param h integer|nil the window height
----@return boolean|table
-local function isWindowSizeSupported(board, w, h)
+---@return table
+local function radioSupportedResolutions(board)
     local supported = {
         ["X20PRO"]={{800,480}, {784, 316}},
         ["X20R"]={{800,480}, {784, 316}},
@@ -128,11 +114,18 @@ local function isWindowSizeSupported(board, w, h)
         ["X20"]={{800,480}, {784, 316}},
     }
     local radioId = getRadioId(board)
-    if not supported[radioId] then return false end
-    if w == nil and h == nil then
-        return supported[radioId][1]
-    end
-    for _, def in pairs(supported[radioId]) do
+    if not supported[radioId] then return {} end
+    return supported[radioId]
+end
+
+---checks if resolution is supported for the given board
+---@param board string a board returned by sys.board
+---@param w integer the window with
+---@param h integer the window height
+---@return boolean
+local function isResolutionSupported(board, w, h)
+    local resolutions = radioSupportedResolutions(board)
+    for _, def in pairs(resolutions) do
         if w == def[1] and h == def[2] then
             return true
         end
@@ -140,6 +133,26 @@ local function isWindowSizeSupported(board, w, h)
     return false
 end
 
+--- returns the radio definition file for a board and a window resolution
+---@param board string the board returned by sys.board
+---@param w integer the width of the window
+---@param h integer the height of the window
+---@return false|table<string, { lines: table|nil, draw: function|nil }>
+local function loadRadioDefinition(board, w, h)
+    local function load(basename)
+        local radioDefinitionFile = string.format("radios/%dx%d/%s.lua", w, h, basename)
+        local chunk, msg = loadfile(radioDefinitionFile)
+        if chunk then
+            return assert(chunk())
+        end
+        if msg then warn(msg) end
+        return false
+    end
+    if isResolutionSupported(board, w, h) then
+        return load(getRadioId(board))
+    end
+    return false
+end
 --define function for retrieving translations from translation files
 local STR = assert(loadfile("i18n/i18n.lua"))().translate
 
@@ -191,17 +204,15 @@ end
 local function wakeup(widget)
     local w, h = lcd.getWindowSize()
     -- load once the radio definition
-    if widget.radio == nil and isWindowSizeSupported(sys.board, w, h) then
-        widget.radio = loadRadioDefinition(sys.board, w, h)
+    if widget.radio == nil then
+        widget.radio = loadRadioDefinition(sys.board, w, h) -- false|table
         lcd.invalidate()
     end
     -- detects if layout has changed
-    local layout = tostring(w).."x"..tostring(h)
     if w ~= widget.windowWidth or h ~= widget.windowHeight then
         widget.windowWidth = w
         widget.windowHeight = h
-        widget.radio = nil -- will invalidate next wakeup
-
+        widget.radio = nil -- will attempt to load again next wakeup
     end
 end
 
@@ -371,12 +382,12 @@ local function configure(widget)
     local radioDefinition
     if widget.radio == nil then
         -- handles the case when we call configure from the screens page without having display the widget
-        local defaultResolution = isWindowSizeSupported(sys.board)
-        if type(defaultResolution) ~= "table" then
+        local resolutions = radioSupportedResolutions(sys.board)
+        if #resolutions < 1 then
             -- unsupported radio (unimplemented as we always return a default radio)
         else
             -- get the first radio definition to use something for the switches
-            radioDefinition = loadRadioDefinition(sys.board, table.unpack(defaultResolution))
+            radioDefinition = loadRadioDefinition(sys.board, table.unpack(resolutions[1]))
         end
     else
         -- handles normal case
