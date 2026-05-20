@@ -789,7 +789,10 @@ local function drawTrim(x, y, w, h)
 end
 local function drawSlider(x, y, w, h, rulerOffset)
     rulerOffset = rulerOffset or 5
-    local rulerHeight = lcd.darkMode() and 3 or 6
+    local rulerHeight = 3
+    if not HAS_THEMES and not lcd.darkMode() then
+        rulerHeight = 6
+    end
     lcd.color(sliderBgColor)
     lcd.drawFilledRectangle(x, y, w, h)
     lcd.color(focusColor)
@@ -799,7 +802,10 @@ local function drawCurvedSlider(x, y, intR, extR, startAngle, endAngle)
     lcd.color(sliderBgColor)
     lcd.drawAnnulusSector(x, y, intR, extR, startAngle, endAngle)
     lcd.color(focusColor)
-    local cursorWidth = lcd.darkMode() and 3 or 6
+    local cursorWidth = 3
+    if not HAS_THEMES and not lcd.darkMode() then
+        cursorWidth = 6
+    end
     if (startAngle + endAngle) / 2 == 270 then --left slider
         lcd.drawFilledRectangle(x - extR, y - math.floor(cursorWidth / 2), math.abs(extR - intR), cursorWidth)
     elseif (startAngle + endAngle) / 2 == 90 then --right slider
@@ -834,7 +840,10 @@ end
 local function drawStick(cx, cy, r)
     local margin = 8
     local rcos30 = 0.866 * r
-    local stickCenterWidth = lcd.darkMode() and 6 or 8
+    local stickCenterWidth = 6
+    if not HAS_THEMES and not lcd.darkMode() then
+        stickCenterWidth = 8
+    end
     lcd.color(stickBgColor)
     lcd.drawFilledCircle(cx, cy, r)
     lcd.color(stickInnerColor)
