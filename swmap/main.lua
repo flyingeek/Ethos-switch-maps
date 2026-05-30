@@ -66,6 +66,10 @@ local function log(text, ansiColor)
     local ANSI_RESET = "\27[0m"
     print(ansiColor .. "[swmap] " .. tostring(text) .. ANSI_RESET)
 end
+local function legacyDarkMode()
+    ---@diagnostic disable-next-line: deprecated
+    return lcd.darkMode and lcd.darkMode() or false
+end
 if debug_mode then log("SWMAP Debug MODE ON") end
 
 -- Theme colors, all set in build
@@ -699,7 +703,7 @@ local function drawButtonSlot(cx, cy, r)
     lcd.color(buttonSlotColor)
     if HAS_THEMES then
         lcd.drawFilledCircle(cx, cy, r)
-    elseif lcd.darkMode() then
+    elseif legacyDarkMode() then
         lcd.drawFilledCircle(cx, cy, r)
     else
         lcd.drawCircle(cx, cy, r)
@@ -790,7 +794,7 @@ end
 local function drawSlider(x, y, w, h, rulerOffset)
     rulerOffset = rulerOffset or 5
     local rulerHeight = 3
-    if not HAS_THEMES and not lcd.darkMode() then
+    if not HAS_THEMES and not legacyDarkMode() then
         rulerHeight = 6
     end
     lcd.color(sliderBgColor)
@@ -803,7 +807,7 @@ local function drawCurvedSlider(x, y, intR, extR, startAngle, endAngle)
     lcd.drawAnnulusSector(x, y, intR, extR, startAngle, endAngle)
     lcd.color(focusColor)
     local cursorWidth = 3
-    if not HAS_THEMES and not lcd.darkMode() then
+    if not HAS_THEMES and not legacyDarkMode() then
         cursorWidth = 6
     end
     if (startAngle + endAngle) / 2 == 270 then --left slider
@@ -841,7 +845,7 @@ local function drawStick(cx, cy, r)
     local margin = 8
     local rcos30 = 0.866 * r
     local stickCenterWidth = 6
-    if not HAS_THEMES and not lcd.darkMode() then
+    if not HAS_THEMES and not legacyDarkMode() then
         stickCenterWidth = 8
     end
     lcd.color(stickBgColor)
@@ -917,7 +921,7 @@ local function build(widget)
             screenBgColor = lcd.themeColor(THEME_PAGE_BGCOLOR)
             sliderBgColor = lcd.themeColor(THEME_BUTTON_BORDER_COLOR)
         else -- 26.1.0-RC1
-            local darkMode = lcd.darkMode()
+            local darkMode = legacyDarkMode()
             screenBgColor = darkMode and lcd.GREY(0x10) or lcd.RGB(0xED, 0xEC, 0xF1)
             sliderBgColor = darkMode and lcd.RGB(0x45, 0x4E, 0x57) or lcd.GREY(0xA0)
         end
@@ -936,7 +940,7 @@ local function build(widget)
     else -- 1.x.x
         buttonSlotColor = lcd.GREY(50)
         secondaryColor = lcd.themeColor(14) -- 14 is the theme color for widget titles
-        if lcd.darkMode() then
+        if legacyDarkMode() then
             screenBgColor = lcd.themeColor(THEME_DEFAULT_BGCOLOR) -- lcd.RGB(0x10, 0x10, 0x10)
             potColor = lcd.RGB(0x31, 0x31, 0x31)
             buttonBgColor = lcd.RGB(0x52, 0x51, 0x52)
@@ -965,7 +969,7 @@ local function build(widget)
         stickBgColor = sliderBgColor
         potBgColor = sliderBgColor
         primaryColor = lcd.themeColor(THEME_PRIMARY_COLOR or THEME_DEFAULT_COLOR)
-        defaultTextColor = lcd.darkMode() and lcd.RGB(0, 0xFF, 0xFF) or lcd.RGB(0x58, 0x5C, 0x58)
+        defaultTextColor = legacyDarkMode() and lcd.RGB(0, 0xFF, 0xFF) or lcd.RGB(0x58, 0x5C, 0x58)
         focusColor = lcd.themeColor(THEME_FOCUS_COLOR)
         trimBgColor = buttonBgColor
         trimColor = inactiveSwitchColor
